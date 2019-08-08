@@ -22,7 +22,7 @@ const messageHandler = (deviceId, prop, message) => {
 }
  
 mqtt.on('connect', () => {
-    mqtt.subscribe('shellies/#', function (err) {
+    mqtt.subscribe('shellies/#', (err) => {
     if (!err) {
 
     } else {
@@ -40,11 +40,10 @@ mqtt.on('message', (topic, message) => {
         const prop = topic.split('/')[2];
         messageHandler(id, prop, message.toString())
     }
-    console.log(shellies)
 })
 
 const setRelay = (id, state) => {
-    client.publish(`shellies/${id}/relay/0/command`, state)
+    mqtt.publish(`shellies/${id}/relay/0/command`, state)
 }
 
 const getAllDevicesInfo = () => shellies

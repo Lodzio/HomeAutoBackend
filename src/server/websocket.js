@@ -1,5 +1,5 @@
 const WebSocket = require("ws");
-const type = {
+const types = {
     UPDATE_DEVICE: 'UPDATE_DEVICE',
     CREATE_DEVICE: 'CREATE_DEVICE',
     FETCH_DEVICES: 'FETCH_DEVICES',
@@ -7,37 +7,38 @@ const type = {
     ERROR: 'ERROR'
 };
 
-const listen = config => {
-    const wss = new WebSocket.Server({port: config.WS_PORT}, () => console.log(`websocket listening on port ${config.WS_PORT}`));
+let wss;
+
+const listen = (config, dataToFetchOnConnection, onEventHandler) => {
+    wss = new WebSocket.Server({port: config.WS_PORT, clientTracking: true}, () => console.log(`websocket listening on port ${config.WS_PORT}`));
     wss.on('connection', (ws) => {
-        ws.on('message', (message) => {
+        if (dataToFetchOnConnection){
+            ws.send(JSON.stringify({type: types.FETCH_DEVICES, data: dataToFetchOnConnection()}))
+        }
+        ws.on('message', (stringMessage) => {
             try {
-                const obj = JSON.parse(message);
-                switch (obj.type) {
-                    case type.UPDATE_DEVICE:
-                        break;
-                    case type.CREATE_DEVICE:
-                        break;
-                    case type.FETCH_DEVICES:
-                        break;
-                    case type.DELETE_DEVICE:
-                        break;
-                    case type.ERROR:
-                        break;
-                    default:
-                        console.error("Incorrect type");
-                }
-                ws.send(message);
+                const message = JSON.parse(stringMessage);
+                const editedMessage = {...message, ...onEventHandler(message)}
+                ws.send(JSON.stringify(editedMessage));
             }
             catch (err) {
                 console.error(err)
-                message = {data: "exception handled in webscket.js:39", type:type.ERROR};
+                message = {data: "exception handled in webscket.js:39", type:types.ERROR};
                 ws.send(JSON.stringify(message));
             }
         });
+        ws.on('error', err => {
+            console.error(err)
+        })
     });
 }
 
+const sendToAllClients = (data, type)=> {
+    wss.clients.forEach(ws => ws.send(JSON.stringify({data, type})))
+}
+
 module.exports = {
-    listen
+    listen,
+    sendToAllClients,
+    types,
 }
