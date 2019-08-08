@@ -8,7 +8,7 @@ const tables = {
 let initFun = database => {}
 const configureNewDB = database => {
     // database.serialize(() => {
-        database.run(`CREATE TABLE ${tables.DEVICES} (title TEXT, type TEXT, value INTEGER, interface TEXT)`);
+        database.run(`CREATE TABLE ${tables.DEVICES} ( id TEXT, title TEXT, type TEXT, value INTEGER, interface TEXT)`);
     // })
     console.log('init db')
 }
@@ -29,7 +29,6 @@ initFun(db);
 *    type: 'switch' | 'sensor',
 *    value: 1 || 0,
 *    interface: 'Shelly'
-*    onSwitchHandler(data) => void
 * }
 */
 
