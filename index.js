@@ -3,40 +3,40 @@ const {HTTP_PORT, WS_PORT} = require('./src/config/config')
 const HTTP = require('./src/server/http')
 const path = require('path');
 const Websocket = require('./src/server/websocket')
-const buttons = [];
+const {removeHandlersFromButton, removeHandlersFromButtons} = require('./src/utils/data')
+const Database = require('./src/database/sqlite')
+const devices = [];
 
-/*buttons: {
-    title: string,
-    type: 'switch' | 'sensor',
-    value: 1 || 0,
-    onSwitchHandler(data) => void
-}
+/* devices: {
+*    title: string,
+*    type: 'switch' | 'sensor',
+*    value: 1 || 0,
+*    interface: 'Shelly'
+*    onSwitchHandler(data) => void
+* }
 */
-const removeHandlersFromButton = button => {
-    const buttonCopy = {...button}
-    delete buttonCopy.onSwitchHandler;
-    return buttonCopy;
+
+const handleDeviceUpdate = (data) => {
+    const index = devices.findIndex(button => button.id === data.id)
+    devices[index] = {...devices[index], ...data};
 }
-const removeHandlersFromButtons = buttons => {
-    return buttons.map(button => removeHandlersFromButton(button))
+
+const eventHandlers = {};
+const initEventHandlers = () => {
+    const {types} = Websocket;
+    eventHandlers[types.UPDATE_DEVICE] = handleDeviceUpdate;
+    eventHandlers[types.SWITCH_DEVICE] = data => devices.find(button => button.title === data.title).onSwitchHandler(data.value)
+    eventHandlers[types.ERROR] = data => console.error('ERROR: ', data)
 }
+initEventHandlers();
 
 const onEventFromClient = (event) => {
+    const {data} = event;
     console.log(event)
-    switch (event.type) {
-        case Websocket.types.UPDATE_DEVICE:
-            buttons.find(button => button.title === event.data.title).onSwitchHandler(event.data.value === 1? Shelly.Commands.on : Shelly.Commands.off)
-            break;
-        case Websocket.types.CREATE_DEVICE:
-            break;
-        case Websocket.types.FETCH_DEVICES:
-            break;
-        case Websocket.types.DELETE_DEVICE:
-            break;
-        case Websocket.types.ERROR:
-            break;
-        default:
-            console.error("Incorrect type");
+    if(eventHandlers[event.type] !== undefined){
+        eventHandlers[event.type](data)
+    } else {
+        console.log('unsupported type', event.type)
     }
 }
 
@@ -46,20 +46,22 @@ HTTP.listen({
     HTMLPath: path.join(__dirname, '/build')
 })
 
-Websocket.listen({WS_PORT}, () => removeHandlersFromButtons(buttons), onEventFromClient);
-
-Shelly.setOnDeviceChangeHandler(change => {
+Websocket.listen({WS_PORT}, () => removeHandlersFromButtons(devices), onEventFromClient);
+const OnShellyDeviceChangeHandler = change => {
     const data = {
         title: change.id,
         type: 'button',
         value: change.relay === 'on'? 1: 0,
-        onSwitchHandler: (newState) => Shelly.setRelay(change.id, newState)
+        id: change.id,
+        onSwitchHandler: (newState) => Shelly.setRelay(change.id, newState === 1? Shelly.commands.ON : Shelly.commands.OFF)
     }
-    if (buttons.find((value => value.title === change.id))){
+
+    if (devices.find((value => value.title === change.id))){
         Websocket.sendToAllClients(removeHandlersFromButton(data), Websocket.types.UPDATE_DEVICE)
     } else {
-        buttons.push(data)
+        devices.push(data)
         Websocket.sendToAllClients(removeHandlersFromButton(data), Websocket.types.CREATE_DEVICE)
     }
-    buttons[change.id] = data;
-})
+    devices[change.id] = data;
+}
+Shelly.run(OnShellyDeviceChangeHandler)
