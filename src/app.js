@@ -1,10 +1,10 @@
-const Shelly = require('./shelly/shelly')
-const {HTTP_PORT, WS_PORT} = require('./config/config')
-const HTTP = require('./server/http')
-const path = require('path');
-const Websocket = require('./server/websocket')
-const {removeHandlersFromButton, removeHandlersFromButtons} = require('./utils/data')
-const Database = require('./database/sqlite')
+import * as Shelly from './shelly/shelly'
+import {HTTP_PORT, WS_PORT} from './config/config'
+import HTTP from './server/http'
+import path from 'path'
+import Websocket from './server/websocket'
+import {removeHandlersFromButton, removeHandlersFromButtons} from './utils/data'
+import Database from './database/sqlite'
 
 /* devices: {
 *    title: string,
@@ -50,11 +50,10 @@ class App {
 
     onWebsocketEventFromClient = (event) => {
         const {data} = event;
-        console.log(event)
         if(eventHandlers[event.type] !== undefined){
             eventHandlers[event.type](data)
         } else {
-            console.log('unsupported type', event.type)
+            console.error('unsupported type', event.type)
         }
     }
 
@@ -64,4 +63,4 @@ class App {
     }
 }
 
-module.exports = App;
+export default App;

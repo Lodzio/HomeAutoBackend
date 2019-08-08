@@ -1,4 +1,4 @@
-const WebSocket = require("ws");
+import WebSocket from "ws"
 const types = {
     UPDATE_DEVICE: 'UPDATE_DEVICE',
     CREATE_DEVICE: 'CREATE_DEVICE',

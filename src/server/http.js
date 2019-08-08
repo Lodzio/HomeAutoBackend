@@ -1,4 +1,4 @@
-const express = require("express");
+import express from "express"
 const app = express();
 // const init = config => {
 //     app.use(express.static(path.join(__dirname, '/build')));

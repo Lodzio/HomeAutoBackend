@@ -1,22 +1,20 @@
-const mqtt  = require('mqtt').connect('mqtt://localhost:27007')
-const {exec} = require('child_process');
-
+import * as mqtt  from 'mqtt'
+import {exec} from 'child_process'
+const client = mqtt.connect('mqtt://localhost:27007')
 const shellies = {}
 
-let onDeviceChange = () => {}
-
-const setRelay = (id, state) => {
+export const setRelay = (id, state) => {
     mqtt.publish(`shellies/${id}/relay/0/command`, state)
 }
 
-const getAllDevicesInfo = () => shellies
+export const getAllDevicesInfo = () => shellies
 
-const run = (onDeviceChange) => {
+export const run = (onDeviceChange) => {
     exec('mosquitto -p 27007', (error, stdout, stderr) => {
         if (error) {console.error(error);}
     });
-    mqtt.on('connect', () => {
-        mqtt.subscribe('shellies/#', (err) => {
+    client.on('connect', () => {
+        client.subscribe('shellies/#', (err) => {
         if (err) {console.error(err)}
       })
     })
@@ -29,7 +27,7 @@ const run = (onDeviceChange) => {
             })
         }
     }
-    mqtt.on('message', (topic, message) => {
+    client.on('message', (topic, message) => {
         if (topic === 'shellies/announce'){
             const announcement = JSON.parse(message.toString())
             shellies[announcement.id] = {ip: announcement.ip}
@@ -41,12 +39,7 @@ const run = (onDeviceChange) => {
     })
 }
 
-module.exports = {
-    getAllDevicesInfo,
-    setRelay,
-    run,
-    commands: {
-        ON: 'on',
-        OFF: 'off'
-    }
+export const commands = {
+    ON: 'on',
+    OFF: 'off'
 }

@@ -1,2 +1,2 @@
-const App = require('./src/app')
-const app = new App();
+import  App from './src/app'
+new App()

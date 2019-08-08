@@ -1,6 +1,5 @@
-const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs')
-
+import sqlite3 from 'sqlite3'
+import fs from 'fs'
 const tables = {
     DEVICES: 'devices'
 }
@@ -21,6 +20,7 @@ try {
 } catch(err) {
     console.error(err)
 }
+
 const db = new sqlite3.Database('./database.db');
 initFun(db);
 
