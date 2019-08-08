@@ -1,3 +1,1 @@
-module.exports = {
-    Shelly: 'Shelly',
-}
+export const Shelly = 'Shelly',

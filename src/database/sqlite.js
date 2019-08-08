@@ -5,7 +5,7 @@ const tables = {
 }
 
 let initFun = database => {}
-const configureNewDB = database => {
+export const configureNewDB = database => {
     // database.serialize(() => {
         database.run(`CREATE TABLE ${tables.DEVICES} ( id TEXT, title TEXT, type TEXT, value INTEGER, interface TEXT)`);
     // })
@@ -33,15 +33,15 @@ initFun(db);
 */
 
 
-const insertDevice = (device) => {
+export const insertDevice = (device) => {
     db.run('INSERT INTO table_name (col1, col2) VALUES ("example","test")')
 }
 
-const updateDevice = (device) => {
+export const updateDevice = (device) => {
     db.run('UPDATE table_name SET col1="work" WHERE col2="test"')
 }
 
-const deleteDevice = (device) => {
+export const deleteDevice = (device) => {
     db.run('DELETE FROM table_name')
 }
 
@@ -59,9 +59,3 @@ const deleteDevice = (device) => {
 // });
  
 // db.close();
-module.exports = {
-    configureNewDB,
-    insertDevice,
-    updateDevice,
-    deleteDevice
-}

@@ -1,13 +1,8 @@
-const removeHandlersFromButton = button => {
+export const removeHandlersFromDevice = button => {
     const buttonCopy = {...button}
     delete buttonCopy.onSwitchHandler;
     return buttonCopy;
 }
-const removeHandlersFromButtons = buttons => {
-    return buttons.map(button => removeHandlersFromButton(button))
-}
-
-module.exports = {
-    removeHandlersFromButton,
-    removeHandlersFromButtons
+export const removeHandlersFromDevices = buttons => {
+    return buttons.map(button => removeHandlersFromDevice(button))
 }

@@ -1,9 +1,9 @@
 import * as Shelly from './shelly/shelly'
 import {HTTP_PORT, WS_PORT} from './config/config'
-import HTTP from './server/http'
+import * as HTTP from './server/http'
 import path from 'path'
-import Websocket from './server/websocket'
-import {removeHandlersFromButton, removeHandlersFromButtons} from './utils/data'
+import * as Websocket from './server/websocket'
+import {removeHandlersFromDevice, removeHandlersFromDevices} from './utils/data'
 import Database from './database/sqlite'
 
 /* devices: {
@@ -17,19 +17,26 @@ import Database from './database/sqlite'
 */
 
 class App {
-    constructor() {
-        Shelly.run(this.onShellyChangeHandler);
-        Websocket.listen({WS_PORT}, () => removeHandlersFromButtons(this.devices), this.onWebsocketEventFromClient);
-        HTTP.listen({HTTP_PORT, WS_PORT, HTMLPath: path.join(__dirname, '/build')})
 
-        this.websocketEventHandlers[Websocket.types.UPDATE_DEVICE] = this.handleDeviceUpdateRequest;
-        this.websocketEventHandlers[Websocket.types.SWITCH_DEVICE] = data => devices.find(button => button.title === data.title).onSwitchHandler(data.value)
-        this.websocketEventHandlers[Websocket.types.ERROR] = data => console.error('ERROR: ', data)
-    }
-
+    detectedAndNotSavedDevices = [];
     devices = [];
     websocketEventHandlers = {};
 
+    constructor() {
+        Shelly.run(this.onShellyChangeHandler);
+        Websocket.listen({WS_PORT}, () => removeHandlersFromDevices(this.devices), this.onWebsocketEventFromClient);
+        HTTP.listen({HTTP_PORT, WS_PORT, HTMLPath: path.join(__dirname, '/build')})
+        this.configWebsocketEventHandlers();
+    }
+    configWebsocketEventHandlers = () => {
+        this.websocketEventHandlers[Websocket.types.UPDATE_DEVICE] = this.handleDeviceUpdateRequest;
+        this.websocketEventHandlers[Websocket.types.CREATE_DEVICE] = this.handleDeviceCreateRequest;
+        this.websocketEventHandlers[Websocket.types.DELETE_DEVICE] = this.handleDeviceDeleteRequest;
+        this.websocketEventHandlers[Websocket.types.SWITCH_DEVICE] = data => this.devices.find(button => button.id === data.id).onSwitchHandler(data.value)
+        this.websocketEventHandlers[Websocket.types.FETCH_DEVICES] = () => removeHandlersFromDevices(devices)
+        this.websocketEventHandlers[Websocket.types.FETCH_DETECTED_DEVICEs] = () => removeHandlersFromDevices(this.detectedAndNotSavedDevices)
+        this.websocketEventHandlers[Websocket.types.ERROR] = data => console.error('ERROR: ', data)
+    }
     onShellyChangeHandler = change => {
         const data = {
             title: change.id,
@@ -39,27 +46,28 @@ class App {
             onSwitchHandler: (newState) => Shelly.setRelay(change.id, newState === 1? Shelly.commands.ON : Shelly.commands.OFF)
         }
     
-        if (devices.find((value => value.title === change.id))){
-            Websocket.sendToAllClients(removeHandlersFromButton(data), Websocket.types.UPDATE_DEVICE)
+        if (this.devices.find((value => value.title === change.id))){
+            Websocket.sendToAllClients(removeHandlersFromDevice(data), Websocket.types.UPDATE_DEVICE)
         } else {
-            devices.push(data)
-            Websocket.sendToAllClients(removeHandlersFromButton(data), Websocket.types.CREATE_DEVICE)
+            this.detectedAndNotSavedDevices.push(data)
         }
-        devices[change.id] = data;
     }
-
     onWebsocketEventFromClient = (event) => {
-        const {data} = event;
-        if(eventHandlers[event.type] !== undefined){
-            eventHandlers[event.type](data)
+        if(this.websocketEventHandlers[event.type] !== undefined){
+            return this.websocketEventHandlers[event.type](event.data)
         } else {
             console.error('unsupported type', event.type)
         }
     }
-
     handleDeviceUpdateRequest = (data) => {
-        const index = devices.findIndex(button => button.id === data.id)
-        devices[index] = {...devices[index], ...data};
+        const index = this.devices.findIndex(button => button.id === data.id)
+        this.devices[index] = {...this.devices[index], ...data};
+    }
+    handleDeviceCreateRequest = (data) => {
+        
+    }
+    handleDeviceDeleteRequest = (data) => {
+        
     }
 }
 
