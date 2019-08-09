@@ -19,12 +19,11 @@ export const listen = (config, onEventHandler) => {
                 const message = JSON.parse(stringMessage);
                 const editedMessage = {...message}
                 editedMessage.data = onEventHandler(message)
-                console.log('editedMessage:', editedMessage)
                 ws.send(JSON.stringify(editedMessage));
             }
             catch (err) {
                 console.error(err)
-                message = {data: "exception handled in webscket.js:39", type:types.ERROR};
+                const message = {data: "exception handled in webscket.js:39", type:types.ERROR};
                 ws.send(JSON.stringify(message));
             }
         });

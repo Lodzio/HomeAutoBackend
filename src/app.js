@@ -5,6 +5,7 @@ import path from 'path'
 import * as Websocket from './server/websocket'
 import {removeHandlersFromDevice, removeHandlersFromDevices} from './utils/data'
 import * as Database from './database/sqlite'
+import * as Interfaces from './constants/interfaces'
 
 /* devices: {
 *    title: string,
@@ -43,19 +44,26 @@ class App {
             type: 'button',
             value: change.relay === 'on'? 1: 0,
             id: change.id,
+            interface: Interfaces.Shelly,
             onSwitchHandler: (newState) => Shelly.setRelay(change.id, newState === 1? Shelly.commands.ON : Shelly.commands.OFF)
         }
+
+        const deviceIndex = this.devices.findIndex((device => device.id === change.id));
+        const detectedDeviceIndex = this.detectedAndNotSavedDevices.findIndex((device => device.id === change.id));
+
     
-        if (this.devices.find((value => value.title === change.id))){
+        if (deviceIndex !== -1){
+            data.title = this.devices[deviceIndex].title;
+            this.devices[deviceIndex] = data
             Websocket.sendToAllClients(removeHandlersFromDevice(data), Websocket.types.UPDATE_DEVICE)
+        } else if (detectedDeviceIndex !== -1){
+            data.title = this.detectedAndNotSavedDevices[detectedDeviceIndex].title;
+            this.detectedAndNotSavedDevices[detectedDeviceIndex] = data
         } else {
-            if (!this.detectedAndNotSavedDevices.find((value => value.title === change.id))){
             this.detectedAndNotSavedDevices.push(data)
-            }
         }
     }
     onWebsocketEventFromClient = (event) => {
-        console.log('event', event)
         if(this.websocketEventHandlers[event.type] !== undefined){
             return this.websocketEventHandlers[event.type](event.data)
         } else {
@@ -72,10 +80,22 @@ class App {
             ...data,
             onSwitchHandler: (newState) => Shelly.setRelay(data.id, newState === 1? Shelly.commands.ON : Shelly.commands.OFF)
         })
+        if (data.interface === Interfaces.Shelly){
+            const index = this.detectedAndNotSavedDevices.findIndex(device => device.id === data.id)
+            if (index !== -1){
+                this.detectedAndNotSavedDevices.splice(index, 1);
+            }
+        }
         return data;
-        // Database.insertDevice(removeHandlersFromDevice(data))
     }
     handleDeviceDeleteRequest = (data) => {
+        if (data.interface === Interfaces.Shelly){
+            const index = this.devices.findIndex(device => device.id === data.id)
+            if (index !== -1){
+                this.detectedAndNotSavedDevices.push(this.devices[index])
+                this.devices.splice(index, 1);
+            }
+        }
         return data;
     }
 }
