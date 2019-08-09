@@ -4,7 +4,7 @@ const client = mqtt.connect('mqtt://localhost:27007')
 const shellies = {}
 
 export const setRelay = (id, state) => {
-    mqtt.publish(`shellies/${id}/relay/0/command`, state)
+    client.publish(`shellies/${id}/relay/0/command`, state)
 }
 
 export const getAllDevicesInfo = () => shellies

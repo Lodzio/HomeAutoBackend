@@ -4,7 +4,7 @@ import * as HTTP from './server/http'
 import path from 'path'
 import * as Websocket from './server/websocket'
 import {removeHandlersFromDevice, removeHandlersFromDevices} from './utils/data'
-import Database from './database/sqlite'
+import * as Database from './database/sqlite'
 
 /* devices: {
 *    title: string,
@@ -24,7 +24,7 @@ class App {
 
     constructor() {
         Shelly.run(this.onShellyChangeHandler);
-        Websocket.listen({WS_PORT}, () => removeHandlersFromDevices(this.devices), this.onWebsocketEventFromClient);
+        Websocket.listen({WS_PORT}, this.onWebsocketEventFromClient);
         HTTP.listen({HTTP_PORT, WS_PORT, HTMLPath: path.join(__dirname, '/build')})
         this.configWebsocketEventHandlers();
     }
@@ -33,8 +33,8 @@ class App {
         this.websocketEventHandlers[Websocket.types.CREATE_DEVICE] = this.handleDeviceCreateRequest;
         this.websocketEventHandlers[Websocket.types.DELETE_DEVICE] = this.handleDeviceDeleteRequest;
         this.websocketEventHandlers[Websocket.types.SWITCH_DEVICE] = data => this.devices.find(button => button.id === data.id).onSwitchHandler(data.value)
-        this.websocketEventHandlers[Websocket.types.FETCH_DEVICES] = () => removeHandlersFromDevices(devices)
-        this.websocketEventHandlers[Websocket.types.FETCH_DETECTED_DEVICEs] = () => removeHandlersFromDevices(this.detectedAndNotSavedDevices)
+        this.websocketEventHandlers[Websocket.types.FETCH_DEVICES] = () => removeHandlersFromDevices(this.devices)
+        this.websocketEventHandlers[Websocket.types.FETCH_DETECTED_DEVICES] = () => removeHandlersFromDevices(this.detectedAndNotSavedDevices)
         this.websocketEventHandlers[Websocket.types.ERROR] = data => console.error('ERROR: ', data)
     }
     onShellyChangeHandler = change => {
@@ -49,10 +49,13 @@ class App {
         if (this.devices.find((value => value.title === change.id))){
             Websocket.sendToAllClients(removeHandlersFromDevice(data), Websocket.types.UPDATE_DEVICE)
         } else {
+            if (!this.detectedAndNotSavedDevices.find((value => value.title === change.id))){
             this.detectedAndNotSavedDevices.push(data)
+            }
         }
     }
     onWebsocketEventFromClient = (event) => {
+        console.log('event', event)
         if(this.websocketEventHandlers[event.type] !== undefined){
             return this.websocketEventHandlers[event.type](event.data)
         } else {
@@ -62,12 +65,18 @@ class App {
     handleDeviceUpdateRequest = (data) => {
         const index = this.devices.findIndex(button => button.id === data.id)
         this.devices[index] = {...this.devices[index], ...data};
+        return removeHandlersFromDevice(this.devices[index]);
     }
     handleDeviceCreateRequest = (data) => {
-        
+        this.devices.push({
+            ...data,
+            onSwitchHandler: (newState) => Shelly.setRelay(data.id, newState === 1? Shelly.commands.ON : Shelly.commands.OFF)
+        })
+        return data;
+        // Database.insertDevice(removeHandlersFromDevice(data))
     }
     handleDeviceDeleteRequest = (data) => {
-        
+        return data;
     }
 }
 

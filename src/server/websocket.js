@@ -5,23 +5,21 @@ export const types = {
     FETCH_DEVICES: 'FETCH_DEVICES',
     DELETE_DEVICE: 'DELETE_DEVICE',
     SWITCH_DEVICE: 'SWITCH_DEVICE',
-    FETCH_DETECTED_DEVICEs: 'FETCH_DETECTED_DEVICEs',
+    FETCH_DETECTED_DEVICES: 'FETCH_DETECTED_DEVICES',
     ERROR: 'ERROR'
 };
 
 let wss;
 
-export const listen = (config, dataToFetchOnConnection, onEventHandler) => {
+export const listen = (config, onEventHandler) => {
     wss = new WebSocket.Server({port: config.WS_PORT, clientTracking: true}, () => console.log(`websocket listening on port ${config.WS_PORT}`));
     wss.on('connection', (ws) => {
-        if (dataToFetchOnConnection){
-            ws.send(JSON.stringify({type: types.FETCH_DEVICES, data: dataToFetchOnConnection()}))
-        }
         ws.on('message', (stringMessage) => {
             try {
                 const message = JSON.parse(stringMessage);
                 const editedMessage = {...message}
-                editedMessage.data = {...message.data, ...onEventHandler(message)}
+                editedMessage.data = onEventHandler(message)
+                console.log('editedMessage:', editedMessage)
                 ws.send(JSON.stringify(editedMessage));
             }
             catch (err) {

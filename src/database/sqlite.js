@@ -6,8 +6,8 @@ const tables = {
 
 let initFun = database => {}
 export const configureNewDB = database => {
-    // database.serialize(() => {
-        database.run(`CREATE TABLE ${tables.DEVICES} ( id TEXT, title TEXT, type TEXT, value INTEGER, interface TEXT)`);
+    // database.serialize((database) => {
+        database.run(`CREATE TABLE ${tables.DEVICES} ( id TEXT PRIMARY KEY, title TEXT NOT NULL, type TEXT NOT NULL, value INTEGER, interface TEXT)`);
     // })
     console.log('init db')
 }
@@ -29,12 +29,13 @@ initFun(db);
 *    type: 'switch' | 'sensor',
 *    value: 1 || 0,
 *    interface: 'Shelly'
+*    id: string,
 * }
 */
 
 
 export const insertDevice = (device) => {
-    db.run('INSERT INTO table_name (col1, col2) VALUES ("example","test")')
+    db.run(`INSERT INTO ${tables.DEVICES} VALUES ("${device.id}","${device.title}", ${device.value}, "${device.interface}")`)
 }
 
 export const updateDevice = (device) => {
