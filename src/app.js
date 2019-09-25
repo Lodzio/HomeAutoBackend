@@ -13,7 +13,7 @@ import * as Interfaces from './constants/interfaces';
 *    value: 1 || 0,
 *    interface: 'Shelly',
 *    id: string,
-*    onSwitchHandler(data) => void
+*    onSwitchHandler: (data) => void
 * }
 */
 
@@ -23,7 +23,7 @@ class App {
 	websocketEventHandlers = {};
 
 	constructor() {
-		Database.selectDevices((rows) => {
+		Database.selectDevices().then((rows) => {
 			this.devices = rows.map((row) => ({ ...row, onSwitchHandler: createSwitchHandler(row.id, row.interface) }));
 			Shelly.run(this.onShellyChangeHandler);
 			Websocket.listen({ WS_PORT }, this.onWebsocketEventFromClient);

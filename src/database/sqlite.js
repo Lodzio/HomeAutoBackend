@@ -36,31 +36,50 @@ initFun(db);
 */
 
 export const insertDevice = (device) => {
-	console.log('insertDevice', device);
-	db.run(
-		`INSERT INTO ${tables.DEVICES} VALUES ("${device.id}","${device.title}", "${device.type}", ${device.value}, "${device.interface}")`
-	);
+	return new Promise((resolve, reject) => {
+		db.run(
+			`INSERT INTO ${tables.DEVICES} VALUES ("${device.id}","${device.title}", "${device.type}", ${device.value}, "${device.interface}")`,
+			(err, result) => {
+				if (err) {
+					console.error(err);
+					reject();
+				}
+				resolve();
+			}
+		);
+	});
 };
 
 export const updateDevice = (device) => {
-	let command = `UPDATE ${tables.DEVICES} SET`;
-	Object.keys(device).forEach((key) => key !== 'id' && (command += ` ${key}="${device[key]}",`));
-	command = command.slice(0, -1);
-	command += ` WHERE id="${device.id}"`;
-	console.log('updateDevice', device);
-	db.run(command);
+	return new Promise((resolve, reject) => {
+		let command = `UPDATE ${tables.DEVICES} SET`;
+		Object.keys(device).forEach((key) => key !== 'id' && (command += ` ${key}="${device[key]}",`));
+		command = command.slice(0, -1);
+		command += ` WHERE id="${device.id}"`;
+		console.log('updateDevice', device);
+		db.run(command, (err, result) => {
+			if (err) {
+				console.error(err);
+				reject();
+			}
+			resolve();
+		});
+	});
 };
 
 export const deleteDevice = (device) => {
 	db.run(`DELETE FROM ${tables.DEVICES} WHERE id="${device.id}"`);
 };
 
-export const selectDevices = (callback) => {
-	db.all(`SELECT * FROM ${tables.DEVICES}`, (err, result) => {
-		if (err) {
-			console.error(err);
-		} else {
-			callback(result);
-		}
+export const selectDevices = () => {
+	return new Promise((resolve, reject) => {
+		db.all(`SELECT * FROM ${tables.DEVICES}`, (err, result) => {
+			if (err) {
+				console.error(err);
+				reject();
+			} else {
+				resolve(result);
+			}
+		});
 	});
 };

@@ -1,25 +1,30 @@
 {
-  "name": "homeautobackend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "nodemon --exec babel-node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "express": "^4.17.1",
-    "mqtt": "^3.0.0",
-    "sqlite3": "^4.0.9",
-    "ws": "^7.1.1"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.5.5",
-    "@babel/node": "^7.5.5",
-    "@babel/plugin-proposal-class-properties": "^7.5.5",
-    "@babel/preset-env": "^7.5.5",
-    "nodemon": "^1.19.1"
-  }
+	"name": "homeautobackend",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"start": "nodemon --exec babel-node index.js",
+		"test": "mocha --require @babel/register"
+	},
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"express": "^4.17.1",
+		"mqtt": "^3.0.0",
+		"sqlite3": "^4.0.9",
+		"ws": "^7.1.1"
+	},
+	"devDependencies": {
+		"@babel/core": "^7.5.5",
+		"@babel/node": "^7.5.5",
+		"@babel/plugin-proposal-class-properties": "^7.5.5",
+		"@babel/plugin-transform-runtime": "^7.6.2",
+		"@babel/preset-env": "^7.5.5",
+		"@babel/register": "^7.6.2",
+		"@babel/runtime": "^7.6.2",
+		"chai": "^4.2.0",
+		"mocha": "^6.2.0",
+		"nodemon": "^1.19.1"
+	}
 }
