@@ -1,24 +1,26 @@
-import sqlite3 from 'sqlite3'
-import fs from 'fs'
+import sqlite3 from 'sqlite3';
+import fs from 'fs';
 const tables = {
-    DEVICES: 'devices'
-}
+	DEVICES: 'devices'
+};
 
-let initFun = database => {}
-export const configureNewDB = database => {
-    // database.serialize((database) => {
-        database.run(`CREATE TABLE ${tables.DEVICES} ( id TEXT PRIMARY KEY, title TEXT NOT NULL, type TEXT NOT NULL, value INTEGER, interface TEXT)`);
-    // })
-    console.log('init db')
-}
+let initFun = (database) => {};
+const configureNewDB = (database) => {
+	// database.serialize((database) => {
+	database.run(
+		`CREATE TABLE ${tables.DEVICES} ( id TEXT PRIMARY KEY, title TEXT NOT NULL, type TEXT NOT NULL, value INTEGER, interface TEXT)`
+	);
+	// })
+	console.log('init db');
+};
 try {
-    if (fs.existsSync('./database.db')) {
-      //file exists
-    } else {
-        initFun = configureNewDB
-    }
-} catch(err) {
-    console.error(err)
+	if (fs.existsSync('./database.db')) {
+		//file exists
+	} else {
+		initFun = configureNewDB;
+	}
+} catch (err) {
+	console.error(err);
 }
 
 const db = new sqlite3.Database('./database.db');
@@ -33,30 +35,32 @@ initFun(db);
 * }
 */
 
-
 export const insertDevice = (device) => {
-    db.run(`INSERT INTO ${tables.DEVICES} VALUES ("${device.id}","${device.title}", ${device.value}, "${device.interface}")`)
-}
+	console.log('insertDevice', device);
+	db.run(
+		`INSERT INTO ${tables.DEVICES} VALUES ("${device.id}","${device.title}", "${device.type}", ${device.value}, "${device.interface}")`
+	);
+};
 
 export const updateDevice = (device) => {
-    db.run('UPDATE table_name SET col1="work" WHERE col2="test"')
-}
+	let command = `UPDATE ${tables.DEVICES} SET`;
+	Object.keys(device).forEach((key) => key !== 'id' && (command += ` ${key}="${device[key]}",`));
+	command = command.slice(0, -1);
+	command += ` WHERE id="${device.id}"`;
+	console.log('updateDevice', device);
+	db.run(command);
+};
 
 export const deleteDevice = (device) => {
-    db.run('DELETE FROM table_name')
-}
+	db.run(`DELETE FROM ${tables.DEVICES} WHERE id="${device.id}"`);
+};
 
-// db.serialize(function() {
- 
-//   const stmt = db.prepare("INSERT INTO lorem VALUES (?)");
-//   for (var i = 0; i < 10; i++) {
-//       stmt.run("Ipsum " + i);
-//   }
-//   stmt.finalize();
- 
-//   db.each("SELECT rowid AS id, info FROM lorem", function(err, row) {
-//       console.log(row.id + ": " + row.info);
-//   });
-// });
- 
-// db.close();
+export const selectDevices = (callback) => {
+	db.all(`SELECT * FROM ${tables.DEVICES}`, (err, result) => {
+		if (err) {
+			console.error(err);
+		} else {
+			callback(result);
+		}
+	});
+};
