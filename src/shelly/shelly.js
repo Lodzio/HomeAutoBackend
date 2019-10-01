@@ -21,7 +21,7 @@ export const run = (onDeviceChange, onInit) => {
 			if (err) {
 				console.error(err);
 			}
-			onInit();
+			onInit && onInit();
 		});
 	});
 	const messageHandler = (deviceId, prop, message) => {

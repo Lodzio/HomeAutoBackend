@@ -2,13 +2,18 @@ import * as Interfaces from '../constants/interfaces';
 import * as Shelly from '../shelly/shelly';
 import * as Database from '../database/sqlite';
 
-export const removeHandlersFromDevice = (button) => {
-	const buttonCopy = { ...button };
-	delete buttonCopy.onSwitchHandler;
-	return buttonCopy;
+export const createStructureForDatabase = (device) => {
+	const result = {
+		title: device.title,
+		type: device.type,
+		value: device.value,
+		interface: device.interface,
+		id: device.id
+	};
+	return result;
 };
-export const removeHandlersFromDevices = (buttons) => {
-	return buttons.map((button) => removeHandlersFromDevice(button));
+export const createStructuresForDatabase = (devices) => {
+	return devices.map(createStructureForDatabase);
 };
 export const createSwitchHandler = (id, deviceInterface) => {
 	switch (deviceInterface) {

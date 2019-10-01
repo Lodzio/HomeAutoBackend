@@ -19,6 +19,12 @@ describe('test database', () => {
 		const savedDevices = await Database.selectDevices();
 		expect(savedDevices.find((device) => device.id === testDevice.id)).to.eql(testDevice);
 	});
+	it('edit device and check logs', async () => {
+		await Database.updateDevice({ ...testDevice, value: 1 });
+		const logs = await Database.selectLogs(testDevice.id);
+		console.log(logs);
+		expect(logs).to.eql([ { deviceId: testDevice.id, value: 1 } ]);
+	});
 	it("delete device and check if device doesn't exist in DB", async () => {
 		await Database.deleteDevice(testDevice);
 		const savedDevices = await Database.selectDevices();

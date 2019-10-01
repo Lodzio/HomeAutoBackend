@@ -3,7 +3,7 @@ import { HTTP_PORT, WS_PORT } from './config/config';
 import * as HTTP from './server/http';
 import path from 'path';
 import * as Websocket from './server/websocket';
-import { removeHandlersFromDevice, removeHandlersFromDevices, createSwitchHandler } from './utils/data';
+import { createStructureForDatabase, createStructuresForDatabase, createSwitchHandler } from './utils/data';
 import * as Database from './database/sqlite';
 import * as Interfaces from './constants/interfaces';
 
@@ -26,7 +26,7 @@ class App {
 		Database.selectDevices().then((rows) => {
 			this.devices = rows.map((row) => ({ ...row, onSwitchHandler: createSwitchHandler(row.id, row.interface) }));
 			Shelly.run(this.onShellyChangeHandler);
-			Websocket.listen({ WS_PORT }, this.onWebsocketEventFromClient);
+			Websocket.listen({ WS_PORT }, this.websocketEventHandlers);
 			HTTP.listen({ HTTP_PORT, WS_PORT, HTMLPath: path.join(__dirname, '/../public') });
 			this.configWebsocketEventHandlers();
 		});
@@ -37,9 +37,10 @@ class App {
 		this.websocketEventHandlers[Websocket.types.DELETE_DEVICE] = this.handleDeviceDeleteRequest;
 		this.websocketEventHandlers[Websocket.types.SWITCH_DEVICE] = (data) =>
 			this.devices.find((button) => button.id === data.id).onSwitchHandler(data.value);
-		this.websocketEventHandlers[Websocket.types.FETCH_DEVICES] = () => removeHandlersFromDevices(this.devices);
+		this.websocketEventHandlers[Websocket.types.FETCH_DEVICES] = () => createStructuresForDatabase(this.devices);
 		this.websocketEventHandlers[Websocket.types.FETCH_DETECTED_DEVICES] = () =>
-			removeHandlersFromDevices(this.detectedAndNotSavedDevices);
+			createStructuresForDatabase(this.detectedAndNotSavedDevices);
+		this.websocketEventHandlers[Websocket.types.FETCH_LOGS_BY_ID] = this.fetchLogsById;
 		this.websocketEventHandlers[Websocket.types.ERROR] = (data) => console.error('ERROR: ', data);
 	};
 	onShellyChangeHandler = (change) => {
@@ -56,7 +57,7 @@ class App {
 		if (deviceIndex !== -1) {
 			this.devices[deviceIndex] = { ...this.devices[deviceIndex], value: data.value };
 			Websocket.sendToAllClients(
-				removeHandlersFromDevice(this.devices[deviceIndex]),
+				createStructureForDatabase(this.devices[deviceIndex]),
 				Websocket.types.UPDATE_DEVICE
 			);
 		} else if (detectedDeviceIndex !== -1) {
@@ -67,21 +68,19 @@ class App {
 			this.detectedAndNotSavedDevices.push(data);
 		}
 	};
-	onWebsocketEventFromClient = (event) => {
-		if (this.websocketEventHandlers[event.type] !== undefined) {
-			return this.websocketEventHandlers[event.type](event.data);
-		} else {
-			console.error('unsupported type', event.type);
-		}
-	};
 	handleDeviceUpdateRequest = (data) => {
 		const index = this.devices.findIndex((button) => button.id === data.id);
 		this.devices[index] = { ...this.devices[index], ...data };
-		const device = removeHandlersFromDevice(this.devices[index]);
+		const device = createStructureForDatabase(this.devices[index]);
 		Database.updateDevice(device);
 		return device;
 	};
+	fetchLogsById = async (data) => {
+		const logs = await Database.selectLogs(data.id);
+		return { ...data, logs };
+	};
 	handleDeviceCreateRequest = (data) => {
+		console.log('handleDeviceCreateRequest', data);
 		this.devices.push({
 			...data,
 			onSwitchHandler: createSwitchHandler(data.id, data.interface)
