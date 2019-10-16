@@ -6,6 +6,7 @@ import * as Websocket from './server/websocket';
 import { createStructureForDatabase, createStructuresForDatabase, createSwitchHandler } from './utils/data';
 import * as Database from './database/sqlite';
 import * as Interfaces from './constants/interfaces';
+import * as DS18B20 from './DS18B20/ds18b20'
 
 /* devices: {
 *    title: string,
@@ -90,6 +91,14 @@ class App {
 			if (index !== -1) {
 				this.detectedAndNotSavedDevices.splice(index, 1);
 			}
+		} else if (data.interface === Interfaces.DS18B20) {
+			DS18B20.readTemp(data.id).then((initTemp) => {
+				DS18B20.readDataWithInterval(data.id, temp => {
+
+				})
+			}).catch(err => {
+				console.error(err)
+			})
 		}
 		Database.insertDevice(data);
 		return data;

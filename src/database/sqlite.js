@@ -56,7 +56,7 @@ export const insertDevice = (device) => {
 
 const checkIfValueChanged = (device) => {
 	return new Promise((resolve, reject) => {
-		new db.get(`SELECT * FROM ${tables.DEVICES} WHERE id="${device.id}"`, (err, row) => {
+		db.get(`SELECT * FROM ${tables.DEVICES} WHERE id="${device.id}"`, (err, row) => {
 			if (err) {
 				console.error(err);
 				reject();
