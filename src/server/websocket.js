@@ -12,9 +12,9 @@ export const types = {
 
 let wss;
 
-const onEventHandler = (websocketEventHandlers) => (event) => {
+const onEventHandler = (websocketEventHandlers) => async (event) => {
 	if (websocketEventHandlers[event.type] !== undefined) {
-		return websocketEventHandlers[event.type](event.data);
+		return await websocketEventHandlers[event.type](event.data);
 	} else {
 		console.error('unsupported type', event.type);
 	}

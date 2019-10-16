@@ -17,7 +17,7 @@ export const readDataWithInterval = (id, callback) => {
     intervalsId.push(setInterval(() => {
         const temp = sensor.readC(id)
         callback(temp, id);
-    }, 30000))
+    }, 3000))
 }
 
 export const clearAllTasks = () => {

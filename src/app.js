@@ -80,28 +80,36 @@ class App {
 		const logs = await Database.selectLogs(data.id);
 		return { ...data, logs };
 	};
-	handleDeviceCreateRequest = (data) => {
+	handleDeviceCreateRequest = async (data) => {
 		console.log('handleDeviceCreateRequest', data);
-		this.devices.push({
-			...data,
-			onSwitchHandler: createSwitchHandler(data.id, data.interface)
-		});
 		if (data.interface === Interfaces.Shelly) {
+			this.devices.push({
+				...data,
+				onSwitchHandler: createSwitchHandler(data.id, data.interface)
+			});
 			const index = this.detectedAndNotSavedDevices.findIndex((device) => device.id === data.id);
 			if (index !== -1) {
 				this.detectedAndNotSavedDevices.splice(index, 1);
 			}
 		} else if (data.interface === Interfaces.DS18B20) {
-			DS18B20.readTemp(data.id).then((initTemp) => {
-				DS18B20.readDataWithInterval(data.id, temp => {
-
-				})
-			}).catch(err => {
-				console.error(err)
+			data.id = '28-02158222adff';
+			data.value = await DS18B20.readTemp(data.id)
+			this.devices.push({
+				...data,
+			});
+			DS18B20.readDataWithInterval(data.id, temp => {
+				data.value = temp;
+				console.log('new meas', data)
+				this.handleDeviceUpdateRequest(data);
+				Websocket.sendToAllClients(
+					createStructureForDatabase(data),
+					Websocket.types.UPDATE_DEVICE
+				);
 			})
 		}
+		console.log('insertDevice', data)
 		Database.insertDevice(data);
-		return data;
+		return Promise.resolve(data);
 	};
 	handleDeviceDeleteRequest = (data) => {
 		if (data.interface === Interfaces.Shelly) {

@@ -10,12 +10,14 @@ export const setRelay = (id, state) => {
 export const getAllDevicesInfo = () => shellies;
 
 export const run = (onDeviceChange, onInit) => {
-	execSync('pkill -9 mosquitto');
-	exec('mosquitto -p 27007', (error, stdout, stderr) => {
-		if (error) {
-			console.error(error);
-		}
-	});
+	try {
+		execSync('pkill -9 mosquitto');
+		exec('mosquitto -p 27007', (error, stdout, stderr) => {
+			if (error) {
+				console.error(error);
+			}
+		});
+	} catch (err) { console.log(err) }
 	client.on('connect', () => {
 		client.subscribe('shellies/#', (err) => {
 			if (err) {
